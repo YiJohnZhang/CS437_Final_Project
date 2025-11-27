@@ -8,7 +8,12 @@ a common TRIG-ECHO pin topology.
 
 Todo:
 - [] select between TMP102 / DS18B20T; expects `get_temperature()` method
+- [] decide: do I need to use `lock`? should I allow concurrent triggers OR 
+	should I just assume they do it sequentially; or add multi-threading?
+	- concurrent triggers: noisy
+	- a even greedier implementation: shared echo and trig pin for all, use MUX to determine which sensor it is connected to
 - [] add optional humidity compensation
+
 
 '''
 
@@ -20,10 +25,10 @@ import OPi.GPIO as GPIO
 Also need mangopi's equivalent gpio library
 
 '''
-
 from time import sleep, time
 
-DEFAULT_SPEED_OF_SOUND = 346.2	# m/s: 298.15 K, 1 atm, dry air
+DEFAULT_AMBIENT_TEMPERATURE = 298.15	# [K]
+DEFAULT_SPEED_OF_SOUND = 346.2			# [m/s]: 298.15 K, 1 atm, dry air
 DEFAULT_TRIGGER_PIN = 18
 MINIMUM_DISTANCE_MM = 2.5
 MAXIMUM_DISTANCE_MM = 3000.0
@@ -37,13 +42,14 @@ class UltrasonicSensor:
 			  echo_pin: int = None, thermostat_object = None, 
 			  _debug_is_no_object_detected_ignored: bool = True):
 		'''
-			Initialize UltrasonicSensor object
+			Initialize `UltrasonicSensor` object
 
 
 		'''
 		if (min_distance_cm == 0):
 			raise Exception(f'UltrasonicSensor::__init__():: cannot set minimum distance to be {min_distance_cm} cm')
 		
+
 		self.echo_pin = trigger_pin if echo_pin is None else echo_pin
 		self.trigger_pin = trigger_pin
 		self.min_distance_cm = min_distance_cm
@@ -77,7 +83,7 @@ class UltrasonicSensor:
 		if (self.echo_pin != self.trigger_pin):
 			GPIO.cleanup(self.echo_pin)
 
-	def get_speed_of_sound_in_dry_air(self, temperature) -> float:
+	def get_speed_of_sound_in_dry_air(self, temperature: int = DEFAULT_AMBIENT_TEMPERATURE) -> float:
 		'''
 			Equation Source: https://www.engineeringtoolbox.com/air-speed-sound-d_603.html
 			v = 20.05 * \sqrt{T}
@@ -104,15 +110,13 @@ class UltrasonicSensor:
 			- `float` otherwise
 		'''
 		distance = None
-		ambient_temperature = 298.15
-
-		if (self.thermostat is not None):
-			ambient_temperature = self.thermostat.get_temperature()
+		ambient_temperature = DEFAULT_AMBIENT_TEMPERATURE if self.thermostat is None else self.thermostat.get_temperature()
 
 		speed_of_sound = self.get_speed_of_sound_in_dry_air(ambient_temperature) if (self.thermostat is not None) else DEFAULT_SPEED_OF_SOUND
 			# [m/s]
 		
 		speed_of_sound_cm_s = speed_of_sound * 100
+			# [cm/s]
 		timeout_time_length = 2 * self.max_distance_cm / speed_of_sound_cm_s
 			# magic ## 2 to compensate for double distance travelled
 		
@@ -128,6 +132,7 @@ class UltrasonicSensor:
 			if (self.trigger_pin == self.echo_pin):
 				GPIO.setup(self.echo_pin, GPIO.IN)
 
+			# wait for echo
 			while ((GPIO.input(self.echo_pin) == 0) and (not is_echo_timed_out)):
 				pulse_start_time = time()
 				if (pulse_start_time > echo_timeout_time):
@@ -137,8 +142,8 @@ class UltrasonicSensor:
 				pulse_end_time = time()
 				if (pulse_start_time > echo_timeout_time):
 					is_echo_timed_out = True
-				
-			
+
+			# calculate distance	
 			if (is_echo_timed_out):
 				if (not self._debug_is_no_object_detected_ignored):
 					raise Exception(f'no object detected!')
@@ -153,9 +158,9 @@ class UltrasonicSensor:
 		self._setup_GPIO_pin()
 		return round(distance, significant_figures)
 	
-def run_test():
+def main():
 	pass
 
 
 if __name__ == '__main__':
-	run_test()
+	main()
