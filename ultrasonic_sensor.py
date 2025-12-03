@@ -17,7 +17,8 @@ Todo:
 
 '''
 
-# RaspberryPi
+from time import sleep, time
+from config import GENERAL_SETTINGS, ULTRASONIC_SENSOR_SETTINGS
 import gpiozero as GPIO
 '''
 Note: need to write a low-level library compatible with OPi, e.g.:
@@ -25,30 +26,30 @@ import OPi.GPIO as GPIO
 Also need mangopi's equivalent gpio library
 
 '''
-from time import sleep, time
+_IS_DEBUG_MODE = GENERAL_SETTINGS['IS_DEBUG_MODE']
 
-DEFAULT_AMBIENT_TEMPERATURE = 298.15	# [K]
-DEFAULT_SPEED_OF_SOUND = 346.2			# [m/s]: 298.15 K, 1 atm, dry air
-DEFAULT_TRIGGER_PIN = 18
-MINIMUM_DISTANCE_MM = 2.5
-MAXIMUM_DISTANCE_MM = 3000.0
-TRIGGER_PULSE_TIME_LENGTH = 0.00001		# 10 us (10 us if 40 kHz)
-SETUP_SETTLING_TIME = 0.5				# 0.5 s
+DEFAULT_SPEED_OF_SOUND = ULTRASONIC_SENSOR_SETTINGS['DEFAULT_SPEED_OF_SOUND']
+DEFAULT_AMBIENT_TEMPERATURE = ULTRASONIC_SENSOR_SETTINGS['DEFAULT_TEMPERATURE']
+DEFAULT_TRIGGER_PIN = ULTRASONIC_SENSOR_SETTINGS['DEFAULT_TRIG_PIN']
+MINIMUM_DISTANCE_MM = ULTRASONIC_SENSOR_SETTINGS['MINIMUM_DETECTION_DISTANCE']
+MAXIMUM_DISTANCE_MM = ULTRASONIC_SENSOR_SETTINGS['MAXIMUM_DETECTION_DISTANCE']
+TRIGGER_PULSE_TIME_LENGTH = ULTRASONIC_SENSOR_SETTINGS['TRIGGER_PULSE_TIME_LENGTH']
+SETUP_SETTLING_TIME = ULTRASONIC_SENSOR_SETTINGS['SETUP_SETTLING_TIME']
 
 class UltrasonicSensor:
 	def __init__(self, trigger_pin: int = DEFAULT_TRIGGER_PIN, 
 			  min_distance_cm: float = MINIMUM_DISTANCE_MM, 
 			  max_distance_cm: float = MAXIMUM_DISTANCE_MM, 
 			  echo_pin: int = None, thermostat_object = None, 
-			  _debug_is_no_object_detected_ignored: bool = True):
+			  _is_debug_mode: bool = _IS_DEBUG_MODE):
 		'''
 			Initialize `UltrasonicSensor` object
-
-
 		'''
 		if (min_distance_cm == 0):
 			raise Exception(f'UltrasonicSensor::__init__():: cannot set minimum distance to be {min_distance_cm} cm')
 		
+		if (max_distance_cm < min_distance_cm):
+			raise Exception(f'UltrasonicSensor::__init__():: cannot set max. distance ({max_distance_cm}) to be less than min. distance ({min_distance_cm})')
 
 		self.echo_pin = trigger_pin if echo_pin is None else echo_pin
 		self.trigger_pin = trigger_pin
@@ -56,7 +57,7 @@ class UltrasonicSensor:
 		self.max_distance_cm = max_distance_cm
 		self.thermostat = thermostat_object
 		
-		self._debug_is_no_object_detected_ignored = _debug_is_no_object_detected_ignored
+		self._is_debug_mode = _is_debug_mode
 
 		# if (self.trigger_pin == self.echo_pin):
 		# todo: need to set a minimum distance for trig->echo handover; if t compesnated calculate minimum distance sensed using some kind of get speed fn
@@ -145,7 +146,7 @@ class UltrasonicSensor:
 
 			# calculate distance	
 			if (is_echo_timed_out):
-				if (not self._debug_is_no_object_detected_ignored):
+				if (not self._is_debug_mode):
 					raise Exception(f'no object detected!')
 			else:
 				pulse_duration = pulse_end_time - pulse_start_time

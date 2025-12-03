@@ -12,6 +12,7 @@ rPi Car Codebase
 - [ ] `line_detector.py` (optional: for fun)
 - [ ] `tcp_server.py` (optional: this our lab 2 code, [CS437 Lab 02](https://github.com/YiJohnZhang/CS437_IoT_Labs/tree/main/CS437_L02))
 - [ ] **Bonus**: `servomotor.py`
+- [ ] change loicense to CC-BY-NC-SA
 
 # Structure
 ```sh
@@ -47,4 +48,6 @@ https://github.com/sparkfun/qwiic_pca9685_py/blob/main/qwiic_pca9685.py
 - `photodector.py`: detects ambient light levels (needs `ADS7830`); depends on an `adc` library
 - `buzzer.py`/`speaker.py`: plays sound
 - `lighting.py`: controls taillights/headlights/indicators. depends on `photodetector.py`, `buzzer.py`/`speaker.py`
-- 
+- `wifi_pos_system.py`: wifi positioning system, needs local APs to be able to position itself relatively (GPS resolution is unlikely to be enough)
+	- or create mimic wifi points (a bt constellation?)
+	- only does ap advertisements (cannot connect)
