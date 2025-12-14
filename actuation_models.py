@@ -26,3 +26,8 @@ class ManueverType(Enum):
 	TURN_LEFT = 2
 	TURN_RIGHT = 3
 	MAINTAIN_LANE = 4
+		# for self-driving only; use in conjunction with a line detector library
+		# probably needs a dedicated thread?
+	
+	EMERGENCY_BRAKE = 5
+		# not implemented, but the idea is to mimic ABS?

@@ -17,9 +17,10 @@ Todo:
 
 '''
 
+from random import randint
 from time import sleep, time
 from config import GENERAL_SETTINGS, ULTRASONIC_SENSOR_SETTINGS
-import gpiozero as GPIO
+import RPi.GPIO as GPIO
 '''
 Note: need to write a low-level library compatible with OPi, e.g.:
 import OPi.GPIO as GPIO
@@ -41,6 +42,7 @@ class UltrasonicSensor:
 			  min_distance_cm: float = MINIMUM_DISTANCE_MM, 
 			  max_distance_cm: float = MAXIMUM_DISTANCE_MM, 
 			  echo_pin: int = None, thermostat_object = None, 
+			  frequency_hop_range: tuple[int] = (),				# kHz
 			  _is_debug_mode: bool = _IS_DEBUG_MODE):
 		'''
 			Initialize `UltrasonicSensor` object
@@ -56,6 +58,10 @@ class UltrasonicSensor:
 		self.min_distance_cm = min_distance_cm
 		self.max_distance_cm = max_distance_cm
 		self.thermostat = thermostat_object
+
+		# for a frequency hop enabled sensor
+		self.frequency_hop_range = frequency_hop_range
+		self.is_frequency_hop_mode = len(self.frequency_hop_range) > 1
 		
 		self._is_debug_mode = _is_debug_mode
 
@@ -72,17 +78,31 @@ class UltrasonicSensor:
 		self.teardown()
 
 	def _setup_GPIO_pin(self) -> None:
-		GPIO.setup(self.trigger_pin, GPIO.OUT)
+		GPIO.setup(channel = self.trigger_pin, dir = GPIO.OUT, pull_up_down = GPIO.PUD_DOWN)
 		GPIO.output(self.trigger_pin, False)
 
 		if (self.trigger_pin != self.echo_pin):
-			GPIO.setup(self.echo_pin, GPIO.IN)
+				GPIO.setup(channel = self.echo_pin, dir = GPIO.IN, pull_up_down = GPIO.PUD_OFF)
 	
 	def teardown(self) -> None:
 		# Lifecycle Method: Release GPIO resources
 		GPIO.cleanup(self.trigger_pin)
 		if (self.echo_pin != self.trigger_pin):
 			GPIO.cleanup(self.echo_pin)
+		
+	def return_random_frequency(self, start_frequency_kHz: int = 40, end_frequency_kHz: int = 40, frequency_step_kHz: int = 5):
+		'''
+			Return a random frequency within this interval, uniform.
+			For frequency hopping.	
+		'''
+		return_frequency = start_frequency_kHz
+
+		if start_frequency_kHz != end_frequency_kHz:
+			frequency_range = range(start_frequency_kHz, end_frequency_kHz, frequency_step_kHz)
+			return_frequency_index = randint(0, len(frequency_range))
+			return_frequency = frequency_range[return_frequency_index]
+		
+		return return_frequency
 
 	def get_speed_of_sound_in_dry_air(self, temperature: int = DEFAULT_AMBIENT_TEMPERATURE) -> float:
 		'''
@@ -131,7 +151,7 @@ class UltrasonicSensor:
 			GPIO.output(self.trigger_pin, False)
 
 			if (self.trigger_pin == self.echo_pin):
-				GPIO.setup(self.echo_pin, GPIO.IN)
+				GPIO.setup(channel = self.echo_pin, dir = GPIO.IN, pull_up_down = GPIO.PUD_OFF)
 
 			# wait for echo
 			while ((GPIO.input(self.echo_pin) == 0) and (not is_echo_timed_out)):
@@ -160,7 +180,20 @@ class UltrasonicSensor:
 		return round(distance, significant_figures)
 	
 def main():
-	pass
+	CURRENT_SCOPE = 'ultrasonic_sensor.py::main()::'
+	ultrasonic_object_1 = UltrasonicSensor(18)
+	ultrasonic_object_2 = UltrasonicSensor(14)
+
+	try:
+		print(f'{CURRENT_SCOPE}{ultrasonic_object_1.return_distance()}')
+		print(f'{CURRENT_SCOPE}{ultrasonic_object_2.return_distance()}')
+
+	except KeyboardInterrupt:
+		print(f'{CURRENT_SCOPE}program interrupted')
+	
+	finally:
+		ultrasonic_object_1.teardown()
+		ultrasonic_object_2.teardown()
 
 
 if __name__ == '__main__':

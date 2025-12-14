@@ -5,6 +5,7 @@ lmao, decide if you want to do enum or map for channel
 from enum import Enum
 
 class I2C_Driver_Model(Enum):
+	CH592F = 'wch_ch592f'
 	TLC59108F = 'tlc59108f'
 	PCA9685 = 'pca9685'
 
@@ -49,10 +50,9 @@ ULTRASONIC_SENSOR_SETTINGS = {
 }
 
 # --------- `i2c_pwm_driver.py` (I2C Driver Config)
-# change this `GENERAL_I2C_PWM_DRIVER_SETTINGS` to `MAIN_i2c...` for all devices connected to the main i2c driver
-GENERAL_I2C_PWM_DRIVER_SETTINGS = {
-	'I2C_DRIVER': I2C_Driver_Model.PCA9685,
-	'I2C_DRIVER_DEVICE_NAME': None,
+GENERAL_I2C_DEVICE_SETTINGS = {
+	'I2C_DEVICE': I2C_Driver_Model.PCA9685,
+	'I2C_DEVICE_NAME': None,
 		# change to tlc... later
 	'I2C_BUS_CHANNEL_NUMBER': 1,
 		# for RPi, [i2c is on bus ## 1](https://forums.raspberrypi.com/viewtopic.php?t=73363)
@@ -60,14 +60,21 @@ GENERAL_I2C_PWM_DRIVER_SETTINGS = {
 		# and use `i2cdetect -l` to list all channels for i2c;
 		# or use `i2cdetect -y <CH##>` to detect if it is the correct bus channel ##
 		# MangoPi: Ch 0, OrangePi: Ch ??
+
+}
+
+# change this `GENERAL_I2C_PWM_DRIVER_SETTINGS` to `MAIN_i2c...` for all devices connected to the main i2c driver
+GENERAL_I2C_PWM_DRIVER_SETTINGS = {
 	'I2C_BIT_RESOLUTION': 12,
 	'I2C_MAX_BITS': None,
+	'DEFAULT_PWM_FREQUENCY': 50,
+		# set it to 50 Hz (for servos) if it is adjustable
 	'PWM_CHANNELS': 16,
 	# === hard config code over to i2c_pwm_driver.py
 	'I2C_DEVICE_ADDRESS': 0x40,
 }
 
-GENERAL_I2C_PWM_DRIVER_SETTINGS['I2C_DRIVER_DEVICE_NAME'] = 'MAIN_PCA9685' if GENERAL_I2C_PWM_DRIVER_SETTINGS['I2C_DRIVER'] is I2C_Driver_Model.PCA9685 else 'MAIN_TLC59108'
+GENERAL_I2C_DEVICE_SETTINGS['I2C_DEVICE_NAME'] = 'MAIN_PCA9685' if GENERAL_I2C_DEVICE_SETTINGS['I2C_DEVICE'] is I2C_Driver_Model.PCA9685 else 'CH592F'
 GENERAL_I2C_PWM_DRIVER_SETTINGS['I2C_MAX_BITS'] = 2 ** GENERAL_I2C_PWM_DRIVER_SETTINGS['I2C_BIT_RESOLUTION'] - 1
 
 # --------- `travel_motor.py` (DRV8835 Config)

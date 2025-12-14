@@ -6,13 +6,15 @@ rPi Car Codebase
 - [x] `pca9685.py` (eventually switch to PCA9634PW or **TLC59108F**; currently using [Sparkfun QWIIC PCA9685](https://github.com/sparkfun/qwiic_pca9685_py/blob/main/qwiic_pca9685.py))
 - [ ] `travel_motor.py` (using **DRV8835DSSR**)
 - [ ] 
-- [ ] `camera.py` (consider using [`vilib.py` from sunfounder (GPL-2.0)?](https://github.com/sunfounder/vilib/blob/main/vilib/vilib.py))
 - [ ] `main.py`
+- [x] `camera.py` (consider using [`vilib.py` from sunfounder (GPL-2.0)?](https://github.com/sunfounder/vilib/blob/main/vilib/vilib.py))
 - [ ] `thermostat.py`? (if entirely digital, o.w. abandon if analog b/c needs adc)
 - [ ] `line_detector.py` (optional: for fun)
 - [ ] `tcp_server.py` (optional: this our lab 2 code, [CS437 Lab 02](https://github.com/YiJohnZhang/CS437_IoT_Labs/tree/main/CS437_L02))
 - [ ] **Bonus**: `servomotor.py`
 - [ ] change loicense to CC-BY-NC-SA
+	- need to get ride of `camera.py` Sunfounder dependency
+
 
 # Structure
 ```sh
@@ -24,7 +26,7 @@ Most libraries are anticipated to (in)directly depend on a `GPIO`-equivalent lib
 ### Module-Independent Modules
 - `ultrasonic.py`
 - `travel_motor.py`
-- i2c_driver (`pca9685.py` / `tlc59108f.py`)
+- i2c_driver (`pca9685.py` / `ch592f.py`)
 - `thermostat.py` (if entirely digital, o.w. abandon if analog b/c needs adc)
 - `line_detector.py`
 
@@ -38,7 +40,8 @@ Most libraries are anticipated to (in)directly depend on a `GPIO`-equivalent lib
 - `sparkfun-qwiic-pca9685`
 
 ## Quick References
-https://github.com/sparkfun/qwiic_pca9685_py/blob/main/qwiic_pca9685.py
+- https://github.com/sparkfun/qwiic_pca9685_py/blob/main/qwiic_pca9685.py
+- how to change loicense: https://github.com/orgs/community/discussions/23555
 
 # Future Developments
 - [ ] Remove all external dependencies
