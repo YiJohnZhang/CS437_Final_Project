@@ -188,6 +188,10 @@ class PCA9685_PWM_Driver(I2C_Device):
 			# TODO: magic ##: Servomotors like 50 Hz; 20k us is time period for that		
 		self.write_pwm(channel, pulse)
 
+class ATMEGA328P_DEVICE(I2C_Device):
+	# TODO: prototype for our first MCU I2C slave, before moving onto less-documented CH592F
+	pass
+
 class CH592F_Device(I2C_Device):
 	# TODO: for later versions when we I2C slave the MCU
 	pass

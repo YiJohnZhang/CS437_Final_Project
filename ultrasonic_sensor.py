@@ -132,6 +132,8 @@ class UltrasonicSensor:
 		'''
 		distance = None
 		ambient_temperature = DEFAULT_AMBIENT_TEMPERATURE if self.thermostat is None else self.thermostat.get_temperature()
+		# TODO: determine VCO to use
+		# TODO: setup ping frequency and translate it to an appropraite voltage
 
 		speed_of_sound = self.get_speed_of_sound_in_dry_air(ambient_temperature) if (self.thermostat is not None) else DEFAULT_SPEED_OF_SOUND
 			# [m/s]
@@ -142,9 +144,8 @@ class UltrasonicSensor:
 			# magic ## 2 to compensate for double distance travelled
 		
 		try:
-			is_echo_timed_out = False
 			pulse_start_time = pulse_end_time = None
-			echo_timeout_time = time() + TRIGGER_PULSE_TIME_LENGTH + timeout_time_length
+			# echo_timeout_time = time() + TRIGGER_PULSE_TIME_LENGTH + timeout_time_length
 			
 			GPIO.output(self.trigger_pin, True)
 			sleep(TRIGGER_PULSE_TIME_LENGTH)
@@ -154,24 +155,16 @@ class UltrasonicSensor:
 				GPIO.setup(channel = self.echo_pin, dir = GPIO.IN, pull_up_down = GPIO.PUD_OFF)
 
 			# wait for echo
-			while ((GPIO.input(self.echo_pin) == 0) and (not is_echo_timed_out)):
+			while ((GPIO.input(self.echo_pin) == 0)):
 				pulse_start_time = time()
-				if (pulse_start_time > echo_timeout_time):
-					is_echo_timed_out = True
 			
-			while ((GPIO.input(self.echo_pin) == 1) and (not is_echo_timed_out)):
+			while ((GPIO.input(self.echo_pin) == 1)):
 				pulse_end_time = time()
-				if (pulse_start_time > echo_timeout_time):
-					is_echo_timed_out = True
 
-			# calculate distance	
-			if (is_echo_timed_out):
-				if (not self._is_debug_mode):
-					raise Exception(f'no object detected!')
-			else:
-				pulse_duration = pulse_end_time - pulse_start_time
-				distance = speed_of_sound_cm_s * pulse_duration / 2
-					# magic ## 2 to compensate for double distance travelled
+			# calculate distance
+			pulse_duration = pulse_end_time - pulse_start_time
+			distance = speed_of_sound_cm_s * pulse_duration / 2
+				# magic ## 2 to compensate for double distance travelled
 
 		except Exception as e:
 			print(f'UltrasonicSensor::get_distance()::{e}')

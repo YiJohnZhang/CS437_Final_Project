@@ -9,7 +9,7 @@ Note: alter LEDs should be controlled by Car obj when turning/stopping/reversing
 from time import sleep
 import RPi.GPIO as GPIO
 from actuation_models import SteeringModels, ManueverType
-from i2c_pwm_driver import PCA9685_PWM_Driver, CH592F_Device
+from i2c_device import PCA9685_PWM_Driver, CH592F_Device
 # from pca9685 import QwiicPCA9685
 from config import GENERAL_SETTINGS, GENERAL_I2C_PWM_DRIVER_SETTINGS, DRV8835_SETTINGS
 
@@ -64,11 +64,6 @@ class TravelMotor:
 		self.are_motors_reverse_mounted = True if are_motors_reverse_mounted else False
 			# used to toggle phase
 		self.steering_model = steering_model
-
-		self.motor_fl_direction = True
-		self.motor_fr_direction = True
-		self.motor_rl_direction = True
-		self.motor_rr_direction = True
 
 	def __enter__(self):
 		return self
@@ -200,6 +195,8 @@ def main():
 		# go forwards
 		travel_motor_obj.move(100)
 		sleep(0.5)
+		# TODO: distance interface sets the sleep time as well... time_sleep * pwm_duty_to_speed = distance?
+
 		# "", faster
 		travel_motor_obj.move(1000)
 		sleep(0.5)
